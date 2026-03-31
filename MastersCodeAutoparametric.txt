@@ -1,38 +1,39 @@
-%% Definition of parameters
-
 % Symbolic variable 
 syms s;
 
+% The physical system has two cantilever beams with endmasses. The parameter values of these two beams along with the primary cylinder are hardcoded initially.
+
 % Define the physical parameters
-EYoung1 = 120*10^9;
-EYoung2 = 120*10^9;t
-b = 10*10^-3;
+
+EYoung1 = 120*10^9; %Youngs Modulus of the beam 1
+EYoung2 = 120*10^9; %Youngs Modulus of the beam 2
+b = 10*10^-3; %width of both the beams 
 h1s = 0.2*10^-3; %thickness of beam 1
 h2s = 0.2*10^-3; %thickness of beam 2
 l1 = 0.06;       %length of beam 1
 l2 = 0.06;       %length of beam 2
 rho1s = 8960;    %density of beam 1
-rho2s = 8960;  % density of beam 2
-M = 0.3;               %primary system mass
-m1 = 0.043;               %beam 1 endmass
-m2 = 0.040;             %beam 2 endmass
-rad = 0.01;              %radius of both endmasses
-lm1=m1 / (rho1s*pi*rad^2);%length of beam 1 endmass
-offset1=10.5*10^-3;
-J1=m1*(lm1^2/3 + rad^2/4 + offset1^2);%MI of beam 1 endmass
+rho2s = 8960;    %density of beam 2
+M = 0.3;         %primary system mass
+m1 = 0.043;      %beam 1 endmass
+m2 = 0.040;      %beam 2 endmass
+rad = 0.01;      %radius of both endmasses (End Masses are cylindrical)
+lm1=m1 / (rho1s*pi*rad^2); % length of beam 1 endmass
+offset1 = 10.5*10^-3; %offset of center of mass from tip of mass for Moment of Inertia calculation
+J1=m1*(lm1^2/3 + rad^2/4 + offset1^2); %MI of beam 1 endmass
 lm2=m2 / (rho2s*pi*rad^2); % length of beam 2 endmass
 J2=m2*(lm2^2/3 + rad^2/4 + offset1^2); % MI of beam 2 endmass
 
 %Wake Oscillator model parameters
-rhof=1.225;
-Qbar=2;
-Cl0=0.3842;
-Cd=1.1856;
-St=0.2;
-Cm=1;
-L=0.3;
-d=0.1;
-mf=Cm*rhof*pi*d^2/4;
+rhof=1.225; %Fluid Density
+Qbar=2; %Threshold Wake parameter
+Cl0=0.3842; %Threshold Lift Coefficient
+Cd=1.1856; %Threshold Drag Coeffcient
+St=0.2; %Strouhal Number
+Cm=1; %Reduced Mass Parameter 
+L=0.3; %Length of primary (cylindrical bluff body) system
+d=0.1; %Diameter of primary (cylindrical bluff body) system
+mf=Cm*rhof*pi*d^2/4; %Reduced Mass Factor
 
 %Piezoelectric parameters PZT - 5H
 d31= - 274*10^-12; 
@@ -52,14 +53,16 @@ rhop = 7500;
 
 
 %calculated parameters
-EI1 = EYoung1*b*h1s^3/12  +  (2/3)*bp*Ep*((hp + h1s/2)^3 - h1s^3/8); %%EI of beam 1
-EI2 = EYoung2*b*h2s^3/12  +  (2/3)*bp*Ep*((hp + h2s/2)^3 - h2s^3/8); %%EI of beam 2
+EI1 = EYoung1*b*h1s^3/12  +  (2/3)*bp*Ep*((hp + h1s/2)^3 - h1s^3/8); %%EI of beam 1 (Piezoelectric bimorph Sandwich)
+EI2 = EYoung2*b*h2s^3/12  +  (2/3)*bp*Ep*((hp + h2s/2)^3 - h2s^3/8); %%EI of beam 2 (Piezoelectric bimorph Sandwich)
 rho1 = rho1s*b*h1s + 2*rhop*bp*hp ; %linear mass density of beam 1
 rho2 = rho2s*b*h2s + 2*rhop*bp*hp; %linear mass density of beam 2
 
 %Calculating Natural Frequencies
 
 syms t1 t2 beta1 beta2;
+
+%Eigenvalue problem determinants were symbolically derived using mathematica. These are solved numerically to get natural frequency in MATLAB.
 
 det_1 = J1 * m1 * beta1^2 * ((EI1 * beta1^4) / rho1)^2 * (2  -  2 * cos(l1 * beta1) * cosh(l1 * beta1))  +  ...
     (EI1^2 * beta1^6 * (2 * rho1  +  cosh(l1 * beta1) * (2 * rho1 * cos(l1 * beta1)  +  ...
@@ -92,17 +95,18 @@ omega_beam2 = (double(BetaSolutions2(1))^4 * EI2 / rho2)^0.5; %Natural frequency
 
 %% Defining Additional Parameters
 masstot=M + m1 + m2; %total mass
-omega1=50;
-k=omega1^2*masstot;
-zeta1=0.05;
-zeta2=0.05; 
-c1 = zeta1*2*masstot*omega1;
-c21 =  zeta2*2*m1*omega_beam1;
-c22 =  zeta2*2*m2*omega_beam2;
-alpha = omega1 / omega_beam1;
-beta = omega1 / omega_beam2;
+omega1=50; % Primary system natural frequency 
+k=omega1^2*masstot; % Primary system stiffness based on natural frequency defined (done for experimentative iterations)
+zeta1=0.05; %Damping constant for beam 1
+zeta2=0.05; %Damping constant for beam 2
+c1 = zeta1*2*masstot*omega1; %Damping Coefficient for primary system 
+c21 =  zeta2*2*m1*omega_beam1; %Damping Coefficient for beam 1
+c22 =  zeta2*2*m2*omega_beam2; %Damping Coefficient for beam 2
+alpha = omega1 / omega_beam1; %Experimental Parameter
+beta = omega1 / omega_beam2;  %Experimental Parameter
 
-% Mode Shape calculation
+% Mode Shape calculation of both beams (similarly done by solving the eigenvalue problem in mathematica symbolically, and numerical calculations %done in MATLAB
+
 ortho1 = (EI1 * t1^2 * beta1^3 * (J1 * beta1^3 * (J1 * l1 * beta1^4  -  2 * rho1)  +  ...
         l1 * beta1 * ( - J1^2 * beta1^6  +  (0  +  1i) * rho1^2) * cos((1  +  1i) * l1 * beta1)  +  ...
         beta1 * (0.5 * J1^2 * l1 * beta1^6  +  J1 * beta1^2 * rho1  -  0.5 * l1 * rho1^2) * cos(2 * l1 * beta1)  +  ...
@@ -164,9 +168,12 @@ D2num= - B2num;
 beta1num=BetaSolutions1(1);
 beta2num=BetaSolutions2(1);
 
+% The calculated mode shapes:
+
 phi1 = A1num*sin(beta1num*s) + B1num*cos(beta1num*s) + C1num*sinh(beta1num*s) + D1num*cosh(beta1num*s);
 phi2 = A2num*sin(beta2num*s) + B2num*cos(beta2num*s) + C2num*sinh(beta2num*s) + D2num*cosh(beta2num*s);
-%% Calculation of  parameters
+
+% Calculation of simplified equation parameters
 % Precompute integrals and numerical values
 eta11 = double(int(c21*phi1^2, s, 0, l1));
 eta12 = double(EI1*(int(phi1*diff(phi1,s)^2*diff(phi1,s,4) + 4*phi1*diff(phi1,s)*diff(phi1,s,2)*diff(phi1,s,3) + phi1*diff(phi1,s,2)^3,s,0,l1)));
@@ -195,7 +202,8 @@ thetap2=double(vp2*(subs(diff(phi2,s),l2)));
 Cp1=2*eps33s*bp*l1/hp;
 Cp2=2*eps33s*bp*l2/hp;
 R=10^4;
-% %% single result calculation
+
+% Solver for one single time step (for checking
 % Ur=8;
 % Uinf=Ur*omega1*d/(2*pi);
 % omegaf=2*pi*Uinf*St/d;
@@ -216,7 +224,8 @@ R=10^4;
 % 
 %     % Solve the system of ODEs 
 %     [t, Y] = ode45(@(t, Y) coupledODEs(t, Y, epsilon1, epsilon2, R1, R2, mu1, mu21, mu22, delta1, delta2, omega_beam1, omega_beam2, omega1, thetap1, thetap2, Cp1, Cp2, R,masstot,rhof,Uinf,L,d,Cl0,Qbar,Cd,X0, Ax, epsx, omegaf), tspan, initial_conditions);
-% 
+
+%  Postprocessing Block
 %     % Extract solutions
 %     x = Y(:,1);
 %     q1 = Y(:,2);
@@ -262,7 +271,9 @@ R=10^4;
 % xlabel('Time');
 % ylabel('Q');
 % title('Wake Oscillator Parameter Q');
-%% Velocity Sweep 
+
+
+%% Velocity Sweep (For Multiple
 %Initialize arrays for results
 U_values = 1:0.01:10; % Define the range of r values
 num_U_values = length(U_values);
@@ -425,7 +436,8 @@ ax.TickLabelInterpreter = 'latex';  % Ensure LaTeX font is used for tick labels
 
 %plot(U_values,Uinfvalues,"Linewidth",1.5)
 %%
-% Define the system of ODEs for numerical solution
+% Define the system of ODEs for numerical solution in the state space domain for the solvers interpretation 
+
 function dqdt = coupledODEs(t, Y, epsilon1, epsilon2, R1, R2, mu1, mu21, mu22, delta1, delta2, omegabeam1, omegabeam2, omega1, thetap1, thetap2, Cp1, Cp2, R, masstot,rhof,Uinf,L,d,Cl0,Qbar,Cd,X0, Ax, epsx , omegaf)
     % Unpack variables
     x = Y(1);
